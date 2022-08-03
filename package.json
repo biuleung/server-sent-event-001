@@ -6,6 +6,7 @@
     "node": "16.16.0"
   },
   "scripts": {
+    "build": "tsc",
     "start": "node ./dist/server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
