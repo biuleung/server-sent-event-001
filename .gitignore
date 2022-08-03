@@ -1,0 +1,37 @@
+logs
+results
+tmp
+temp
+
+# compiled output
+dist/
+
+# API keys and secrets
+.env
+developer.env
+production.env
+
+# Dependency directory
+node_modules
+bower_components
+
+# docker persistance storage
+.data/
+
+# Editors
+.idea
+*.iml
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# ts cache
+.tscache
+.vscode
+yarn-error.log
+
+docker-compose.override.yml
+systalk-iam
+
+.env
