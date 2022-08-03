@@ -4,7 +4,7 @@ tmp
 temp
 
 # compiled output
-dist/
+# dist/
 
 # API keys and secrets
 .env
