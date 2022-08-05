@@ -12,6 +12,22 @@ import helmet from 'helmet';
 import frontendRouter from './routes/frontend';
 import apiRouter from './routes/api';
 
+import mongoose from 'mongoose';
+
+const url = `mongodb+srv://biuleong-test-01:bWe%40P5kH%40VXi4M2@cluster0.jikxd.mongodb.net/test001?retryWrites=true&w=majority`;
+
+mongoose.connect(url)
+  .then(() => {
+    console.log('Connected to database ');
+  })
+  .catch((err) => {
+    console.error(`Error connecting to the database. \n${err}`);
+  })
+
+// testModel.find({}).then(res => {
+//   console.log(res);
+// })
+
 // Create Express server
 const app = express();
 
@@ -26,36 +42,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // 安全性設定
 // 啟用X-Frame-Options標頭，SAMEORIGIN設定為同源檢查(必須為 相同協定、來源網址、port)
-app.use(helmet({
-  // contentSecurityPolicy:{
-  //     directives: {
-  //         fontSrc : ["'self'" , "data:"],
-  //         // scriptSrc : ["'self'" , "'unsafe-inline'" , "" ],
-  //         scriptSrc: [
-  //             "'self'",
-  //             // 針對不支援nonce的瀏覽器提供服務
-  //             "'unsafe-inline'",
-  //             "'nonce-1d8f595c-35e6-4816-9136-d2570840785b'",
-  //             function (req, res) {
-  //                 //'nonce-614d9122-d5b0-4760-aecf-3a5d17cf0ac9'
-  //                 return "'nonce-" + res.viewModel.CSP_nonce + "'";
-  //             }
-  //         ],
-  //         styleSrc : [
-  //             "'self'",
-  //             // 針對不支援nonce的瀏覽器提供服務
-  //             "'unsafe-inline'",
-  //             "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
-  //             "'sha256-xylbkVtqJQuRDTD/O50Zkbb0PJR006+vxsulnu5EOD4='",
-  //             "'sha256-G5+N2IFfqXlpJdNHrzbEE2GoopviouWyNRPlvMT+DgU='"
-  //         ],
-  //         defaultSrc: ["'self'"]
-  //     }
-  // },
-  // frameguard: {
-  //   action: "SAMEORIGIN"
-  // }
-}));
+app.use(helmet({}));
 
 // router========================================
 app.use(
@@ -64,7 +51,7 @@ app.use(
 
 // 前端網頁部分
 
-app.use('/' , frontendRouter);
+app.use('/', frontendRouter);
 app.use('/api', apiRouter);
 
 

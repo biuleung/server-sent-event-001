@@ -1,7 +1,11 @@
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -14,7 +18,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -29,12 +33,6 @@ const moment_1 = __importDefault(require("moment"));
 class MyConsoleTransport extends Transport.default {
     constructor(opts) {
         super(opts);
-        //
-        // Consume any custom options here. e.g.:
-        // - Connection information for databases
-        // - Authentication information for APIs (e.g. loggly, papertrail,
-        //   logentries, etc.).
-        //
     }
     log(info, callback) {
         setImmediate(() => {
@@ -80,7 +78,7 @@ class MyConsoleTransport extends Transport.default {
             else {
                 message = JSON.stringify(info);
             }
-            message = `${moment_1.default().format('YYYY-MM-DDTHH:mm:ssZ')} ${message}`;
+            message = `${(0, moment_1.default)().format('YYYY-MM-DDTHH:mm:ssZ')} ${message}`;
             console.info(this.getColorFormat(colorCode), info.level, message);
         });
         callback();
@@ -89,7 +87,6 @@ class MyConsoleTransport extends Transport.default {
         return `${colorCode}%s${MyConsoleTransport.ConsoleColorStyle.Reset} %s`;
     }
 }
-// console顯示的代碼
 MyConsoleTransport.ConsoleColorStyle = {
     Reset: '\x1b[0m',
     FgBlack: '\x1b[30m',

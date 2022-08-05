@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strict": false,
     "noUnusedLocals": true,
+    "skipLibCheck": true,
     "noUnusedParameters": false,
     "module": "commonjs",
     "esModuleInterop": true,
@@ -22,5 +23,8 @@
   },
   "include": [
     "src/**/*"
+  ],
+  "exclude": [
+    "./node_modules/"
   ]
 }

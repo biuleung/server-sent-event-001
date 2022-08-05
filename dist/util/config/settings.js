@@ -10,15 +10,6 @@ class Settings {
         this.port = !lodash_1.default.isNil(process.env.PORT) ? process.env.PORT : '3000';
         this.logLevel = !lodash_1.default.isNil(process.env.LOG_LEVEL) ? process.env.LOG_LEVEL : 'warn';
     }
-    /**
-     * 將傳入值轉型為整數，如果無法轉型，則回覆一個預設值
-     *
-     * @static
-     * @param {*} data
-     * @param {number} defaultValue
-     * @returns {number}
-     * @memberof Settings
-     */
     static parseIntOrDefault(data, defaultValue) {
         const parsed = Number.parseInt(data, 10);
         if (!lodash_1.default.isNumber(parsed)) {
