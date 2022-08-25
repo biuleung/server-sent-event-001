@@ -10,11 +10,6 @@ if (settings.node_env === 'development') {
   app.use((error: any, req: Request, res: Response, _next: NextFunction) => {
     let errorJson = null;
     let httpStatus = 500;
-    // if (error instanceof StaiError) {
-    //   errorJson = error.toStaiErrorJSON(true);
-    //   httpStatus = error.errorCode.httpStatus;
-    //   logger.info(error);
-    // } 
     if (error instanceof Error) {
       errorJson = { status: httpStatus, stack: error.stack, message: error.message };
       logger.info(error);
@@ -33,11 +28,6 @@ if (settings.node_env === 'development') {
 app.use((error: any, req: Request, res: Response, _next: NextFunction) => {
   let errorJson = null;
   let httpStatus = 500;
-  // if (error instanceof StaiError) {
-  //   errorJson = error.toStaiErrorJSON();
-  //   httpStatus = error.errorCode.httpStatus;
-  //   logger.info(error);
-  // } 
   if (error instanceof Error) {
     errorJson = { status: httpStatus, message: error.message };
     logger.info(error);

@@ -4,7 +4,8 @@ tmp
 temp
 
 # compiled output
-# dist/
+.DS_Store
+dist/
 
 # API keys and secrets
 .env

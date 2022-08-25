@@ -28,75 +28,23 @@ const emitEvent = (res: any, id: any, data: any) => {
 }
 
 const NewTask = (req: any, res: any) => {
-  // NewTaskRes.writeHead(200, {
-  //   'Content-Type': 'text/event-stream',
-  //   'Cache-Control': 'no-cache',
-  //   'Connection': 'keep-alive'
-  // });
-  // EventState.updatedTime = (new Date()).toLocaleTimeString();
-
-  // if (EventState.updatingEventIntv && EventState.updatingEventIntv !== false) {
-  //   EventState.checkingEventIntv = setInterval(async () => {
-  //     console.log(`fetch NewTask: ${EventState}`);
-  //     emitEvent(NewTaskRes, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
-  //     if (EventState.checkingEventIntv === false) {
-  //       clearInterval(EventState.checkingEventIntv);
-  //     }
-  //   }, 3000);
-  // }
-  // else {
   res.set('Content-Type', 'application/json');
-
   updatedTask(res);
-
-  // clearInterval(EventState.updatingEventIntv);
-  // EventState.updatingEventIntv = false;
-  // EventState.eventId = uuidv4().split('-')[0];
-  // EventState.updatingEventIntv = setInterval(async function () {
-  //   EventState.percentageOf += 0.07;
-  //   EventState.status = 'running';
-  //   if (EventState.percentageOf >= 100) {
-  //     EventState.percentageOf = 100;
-  //     EventState.status = 'completed';
-  //   }
-
-  //   try {
-  //     await testModel.findOneAndUpdate({ "tid": "tid001" }, {
-  //       "status": EventState.status,
-  //       "percentageOf": EventState.percentageOf,
-  //       "time": EventState.updatedTime,
-  //       "eid": EventState.eventId
-  //     }, { new: true }).then(updatedTask => {
-  //       res.json(updatedTask)
-  //     })
-  //     // .then(res => {
-  //     //   console.log(`update NewTask: ${EventState.eventId} ${res}`);
-  //     //   if (mongoose.connection.readyState === 1) {
-  //     //     emitEvent(NewTaskRes, EventState.eventId, { time: res.time, status: `${res.status}`, percentageOf: `${res.percentageOf}` });
-  //     //   } else {
-  //     //     emitEvent(NewTaskRes, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
-  //     //   }
-  //     // });
-  //   } catch (error) {
-  //     // emitEvent(NewTaskRes, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
-  //   }
-  // }, 3000);
-  // }
 }
 
-const updatedTask = (res?: any) => {
+const updatedTask = (newTaskrResponse?: any) => {
   clearInterval(EventState.updatingEventIntv);
   EventState.updatingEventIntv = false;
-  EventState.eventId = res ? uuidv4().split('-')[0] : EventState.eventId;
+  EventState.eventId = newTaskrResponse ? uuidv4().split('-')[0] : EventState.eventId;
   EventState.updatingEventIntv = setInterval(async function () {
-    EventState.percentageOf += 0.07;
+    EventState.percentageOf += 1.5;
     EventState.status = 'running';
     if (EventState.percentageOf >= 100) {
       EventState.percentageOf = 100;
       EventState.status = 'completed';
     }
 
-    if (res) {
+    if (newTaskrResponse) {
       try {
         await testModel.findOneAndUpdate({ "tid": "tid001" }, {
           "status": EventState.status,
@@ -104,13 +52,12 @@ const updatedTask = (res?: any) => {
           "time": EventState.updatedTime,
           "eid": EventState.eventId
         }, { new: true }).then(updatedTask => {
-          res.json(updatedTask)
+          newTaskrResponse.json(updatedTask)
         })
 
       } catch (error) {
       }
     }
-
   }, 3000);
 }
 
@@ -123,6 +70,8 @@ const EmitTaskStatus = async (req: any, res: any) => {
   EventState.updatedTime = (new Date()).toLocaleTimeString();
 
   const triggerCheckEventInt = () => {
+    EventState.updatedTime = (new Date()).toLocaleTimeString();
+
     EventState.checkingEventIntv = setInterval(async () => {
       try {
         await testModel.findOneAndUpdate({ "tid": "tid001" }, {
@@ -135,13 +84,13 @@ const EmitTaskStatus = async (req: any, res: any) => {
             console.log(`check NewTask: ${EventState.eventId} ${updatedRes}`);
             if (mongoose.connection.readyState === 1) {
               emitEvent(res, EventState.eventId, { time: updatedRes.time, status: `${updatedRes.status}`, percentageOf: `${updatedRes.percentageOf}` });
-              if (updatedRes.status === 'stopped') {
+              if (updatedRes.status === 'terminated') {
                 clearInterval(EventState.checkingEventIntv);
                 EventState.checkingEventIntv = false;
               }
             } else {
               emitEvent(res, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
-              if (EventState.status === 'stopped') {
+              if (EventState.status === 'terminated') {
                 clearInterval(EventState.checkingEventIntv);
                 EventState.checkingEventIntv = false;
               }
@@ -149,7 +98,9 @@ const EmitTaskStatus = async (req: any, res: any) => {
           });
       } catch (error) {
         clearInterval(EventState.checkingEventIntv);
+        EventState.checkingEventIntv = false;
         emitEvent(res, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
+      } finally {
       }
     }, 3000);
   }
@@ -167,13 +118,11 @@ const EmitTaskStatus = async (req: any, res: any) => {
       updatedTask();
     }
   }
-
-
 }
 
 const terminateTask = async (req: any, res: any) => {
   EventState.percentageOf = 0;
-  EventState.status = 'stopped';
+  EventState.status = 'terminated';
   const updatedTime = (new Date()).toLocaleTimeString();
 
   clearInterval(EventState.updatingEventIntv);
@@ -185,12 +134,9 @@ const terminateTask = async (req: any, res: any) => {
     "status": EventState.status,
     "percentageOf": EventState.percentageOf,
     "time": updatedTime
-  }, { new: true }).then(updatedTask => {
-
-
+  }, { new: true }).then(TaskLastStatus => {
     res.status = 200;
-    res.json(updatedTask);
-
+    res.json(TaskLastStatus);
   });
 
 }

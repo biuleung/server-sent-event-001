@@ -1,5 +1,5 @@
 import _ from 'lodash';
-
+import dotenv from 'dotenv';
 class Settings {
   /**
    * 將傳入值轉型為整數，如果無法轉型，則回覆一個預設值
@@ -48,6 +48,7 @@ class Settings {
   logLevel:string;
 
   constructor() {
+    dotenv.config();
     this.node_env = !_.isNil(process.env.NODE_ENV) ? process.env.NODE_ENV : 'development';
     this.port = !_.isNil(process.env.PORT) ? process.env.PORT : '3000';
     this.logLevel = !_.isNil(process.env.LOG_LEVEL) ? process.env.LOG_LEVEL : 'warn';

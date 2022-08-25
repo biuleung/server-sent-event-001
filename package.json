@@ -24,7 +24,9 @@
     ]
   },
   "dependencies": {
+    "@systalk/state-message": "^0.0.3",
     "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
     "express": "^4.17.1",
     "helmet": "^3.23.3",
     "lodash": "^4.17.20",

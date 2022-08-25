@@ -14,6 +14,7 @@ import apiRouter from './routes/api';
 
 import mongoose from 'mongoose';
 
+
 const url = `mongodb+srv://biuleong-test-01:bWe%40P5kH%40VXi4M2@cluster0.jikxd.mongodb.net/test001?retryWrites=true&w=majority`;
 
 mongoose.connect(url)
@@ -23,10 +24,6 @@ mongoose.connect(url)
   .catch((err) => {
     console.error(`Error connecting to the database. \n${err}`);
   })
-
-// testModel.find({}).then(res => {
-//   console.log(res);
-// })
 
 // Create Express server
 const app = express();
