@@ -1,25 +1,93 @@
 import * as express from 'express';
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import { Stage, StaiStateMessage, Status, CustomMessage } from '@systalk/state-message/dist';
+import _ from 'lodash';
+
 
 const Schema = mongoose.Schema;
-const SomeModelSchema = new Schema({
+
+const StageSchema = new Schema({
+  current: Number,
+  total: Number
+}, { _id: false });
+
+const InfoSchema = new Schema({
+  name: String,
+  httpStatus: String
+})
+
+const CustomMessage = new Schema({
+  code: String,
+  message: String,
+  info: InfoSchema
+})
+
+const StateMesssageSchema = new Schema({
   tid: String,
   eid: String,
   status: String,
-  percentageOf: Number,
+  info: String,
+  stage: StageSchema,
+  errors: [CustomMessage],
+  warnings: [CustomMessage],
   time: { type: String, default: (new Date()).toLocaleTimeString() }
 });
 
-const testModel = mongoose.model('taskStatus', SomeModelSchema);
+const testModel = mongoose.model('taskStatus', StateMesssageSchema);
 class EventState {
   static eventId: string;
-  static percentageOf = 0;
-  static status = 'running';
   static updatedTime: string;
   static updatingEventIntv: any;
   static checkingEventIntv: any;
 }
+
+let info = 'some info';
+
+let stage: Stage = {
+  current: 1,
+  total: 100
+}
+
+const errors: CustomMessage[] = [
+  {
+    code: 'input_param_error',
+    message: 'error',
+    info: {
+      name: 'name01',
+      httpStatus: '403'
+    }
+  },
+  {
+    code: 'duplicate_value',
+    message: 'error',
+    info: {
+      name: 'name01',
+      httpStatus: '400'
+    }
+  }
+];
+
+const warnings: CustomMessage[] = [
+  {
+    code: 'input_param_error',
+    message: 'error',
+    info: {
+      name: 'name01',
+      httpStatus: '403'
+    }
+  },
+  {
+    code: 'duplicate_value',
+    message: 'error',
+    info: {
+      name: 'name01',
+      httpStatus: '400'
+    }
+  }
+]
+
+const msg = new StaiStateMessage('analyzing', Status.PENDING, info, stage, errors, warnings);
 
 const emitEvent = (res: any, id: any, data: any) => {
   res.write('id: ' + id + '\n');
@@ -37,18 +105,18 @@ const updatedTask = (newTaskrResponse?: any) => {
   EventState.updatingEventIntv = false;
   EventState.eventId = newTaskrResponse ? uuidv4().split('-')[0] : EventState.eventId;
   EventState.updatingEventIntv = setInterval(async function () {
-    EventState.percentageOf += 1.5;
-    EventState.status = 'running';
-    if (EventState.percentageOf >= 100) {
-      EventState.percentageOf = 100;
-      EventState.status = 'completed';
+    msg.stage.current += 0.73;
+    msg.status = Status.RUNNING;
+    if (msg.stage.current >= msg.stage.total) {
+      msg.stage.current = 100;
+      msg.status = Status.SUCCESS;
     }
 
     if (newTaskrResponse) {
       try {
         await testModel.findOneAndUpdate({ "tid": "tid001" }, {
-          "status": EventState.status,
-          "percentageOf": EventState.percentageOf,
+          "status": msg.status,
+          "stage": msg.stage,
           "time": EventState.updatedTime,
           "eid": EventState.eventId
         }, { new: true }).then(updatedTask => {
@@ -75,22 +143,21 @@ const EmitTaskStatus = async (req: any, res: any) => {
     EventState.checkingEventIntv = setInterval(async () => {
       try {
         await testModel.findOneAndUpdate({ "tid": "tid001" }, {
-          "status": EventState.status,
-          "percentageOf": EventState.percentageOf,
+          "status": msg.status,
+          "stage": msg.stage,
           "time": EventState.updatedTime,
           "eid": EventState.eventId
         }, { new: true })
           .then((updatedRes) => {
-            console.log(`check NewTask: ${EventState.eventId} ${updatedRes}`);
             if (mongoose.connection.readyState === 1) {
-              emitEvent(res, EventState.eventId, { time: updatedRes.time, status: `${updatedRes.status}`, percentageOf: `${updatedRes.percentageOf}` });
-              if (updatedRes.status === 'terminated') {
+              emitEvent(res, EventState.eventId, { time: updatedRes.time, stateMessage: `${JSON.stringify(msg)}` });
+              if (updatedRes.status === Status.ABORTING) {
                 clearInterval(EventState.checkingEventIntv);
                 EventState.checkingEventIntv = false;
               }
             } else {
-              emitEvent(res, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
-              if (EventState.status === 'terminated') {
+              emitEvent(res, EventState.eventId, { time: EventState.updatedTime, stateMessage: `${JSON.stringify(msg)}` });
+              if (msg.status === Status.ABORTING) {
                 clearInterval(EventState.checkingEventIntv);
                 EventState.checkingEventIntv = false;
               }
@@ -99,7 +166,7 @@ const EmitTaskStatus = async (req: any, res: any) => {
       } catch (error) {
         clearInterval(EventState.checkingEventIntv);
         EventState.checkingEventIntv = false;
-        emitEvent(res, EventState.eventId, { time: EventState.updatedTime, status: `${EventState.status}`, percentageOf: `${EventState.percentageOf}` });
+        emitEvent(res, EventState.eventId, { time: EventState.updatedTime, stateMessage: `${JSON.stringify(msg)}` });
       } finally {
       }
     }, 3000);
@@ -109,9 +176,12 @@ const EmitTaskStatus = async (req: any, res: any) => {
     triggerCheckEventInt();
   } else {
     const result = await testModel.findOne({ "tid": "tid001" });
-    if (result.status === 'running') {
-      EventState.status = result.status;
-      EventState.percentageOf = result.percentageOf;
+    if (result.status === Status.RUNNING) {
+      msg.status = result.status;
+      if (result.stage && !_.isNil(result.stage.current) && !_.isNil(result.stage.total)) {
+        msg.stage.current = result.stage.current;
+        msg.stage.total = result.stage.total;
+      }
       EventState.updatedTime = result.time;
       EventState.eventId = result.eid;
       triggerCheckEventInt();
@@ -121,8 +191,8 @@ const EmitTaskStatus = async (req: any, res: any) => {
 }
 
 const terminateTask = async (req: any, res: any) => {
-  EventState.percentageOf = 0;
-  EventState.status = 'terminated';
+  msg.stage.current = 0;
+  msg.status = Status.ABORTING;
   const updatedTime = (new Date()).toLocaleTimeString();
 
   clearInterval(EventState.updatingEventIntv);
@@ -131,8 +201,8 @@ const terminateTask = async (req: any, res: any) => {
   EventState.checkingEventIntv = false;
 
   await testModel.findOneAndUpdate({ "tid": "tid001" }, {
-    "status": EventState.status,
-    "percentageOf": EventState.percentageOf,
+    "status": msg.status,
+    "stage": msg.stage,
     "time": updatedTime
   }, { new: true }).then(TaskLastStatus => {
     res.status = 200;
@@ -154,5 +224,3 @@ router.get('/v1/checkTaskStatus', EmitTaskStatus);
 router.get('/v1/terminateTask', terminateTask);
 
 export = router;
-
-
