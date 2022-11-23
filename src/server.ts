@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from './util/logger';
 import app from './app';
-// import { StaiError } from '@systalk/error';
 import settings from './util/config/settings';
 import _ from 'lodash';
 
 if (settings.node_env === 'development') {
-  // 開發模式的錯誤處理
   app.use((error: any, req: Request, res: Response, _next: NextFunction) => {
     let errorJson = null;
     let httpStatus = 500;
@@ -15,7 +13,6 @@ if (settings.node_env === 'development') {
       logger.info(error);
     } else {
       errorJson = error;
-      // 無預期的錯誤
       logger.warn(error);
     }
     if (isJSON(req)) {
@@ -24,7 +21,6 @@ if (settings.node_env === 'development') {
     return res.status(httpStatus).render('error', { error: errorJson });
   });
 }
-// 生產模式的錯誤處理
 app.use((error: any, req: Request, res: Response, _next: NextFunction) => {
   let errorJson = null;
   let httpStatus = 500;
@@ -33,7 +29,6 @@ app.use((error: any, req: Request, res: Response, _next: NextFunction) => {
     logger.info(error);
   } else {
     errorJson = error;
-    // 無預期的錯誤
     logger.warn(JSON.stringify(error));
   }
   if (req.is('json') !== false) {
